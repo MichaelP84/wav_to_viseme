@@ -1,49 +1,8 @@
-import whisperx
-import gc 
-import json
-import modal
-from modal import Image
-
 
 from moviepy.editor import *
 from moviepy.video.tools.drawing import color_gradient
 from pydub import AudioSegment
 
-
-stub = modal.Stub("whisperX")
-
-whisperX = Image.debian_slim().pip_install(
-    "pytorch==2.0.0 torchaudio==2.0.0 pytorch-cuda=11.8 -c pytorch -c nvidia", "git+https://github.com/m-bain/whisperx.git"
-)
-
-
-def main():
-    device = "cpu" 
-    audio_file = "recording_2.m4a"
-    batch_size = 16 # reduce if low on GPU mem
-    compute_type = "int8" # change to "int8" if low on GPU mem (may reduce accuracy)
-
-    # 1. Transcribe with original whisper (batched)
-    model = whisperx.load_model("large-v2", device, compute_type=compute_type)
-
-    # save model to local path (optional)
-    # model_dir = "/path/"
-    # model = whisperx.load_model("large-v2", device, compute_type=compute_type, download_root=model_dir)
-
-    audio = whisperx.load_audio(audio_file)
-    result = model.transcribe(audio, batch_size=batch_size)
-    print(result["segments"]) # before alignment
-    print("before alignment: ", result["segments"])
-    # delete model if low on GPU resources
-    # import gc; gc.collect(); torch.cuda.empty_cache(); del model
-
-    # 2. Align whisper output
-    model_a, metadata = whisperx.load_align_model(language_code=result["language"], device=device)
-    result = whisperx.align(result["segments"], model_a, metadata, audio, device, return_char_alignments=True)
-
-    with open('data.json', 'w') as f:
-        json.dump(result["segments"], f, indent=4)
-        
 
 def run_video():
     # Example usage
@@ -105,7 +64,3 @@ def create_highlighted_video(audio_file, data, output_file):
 
     # Write the result to a file
     video.write_videofile(output_file, fps=12)  # half the fps to maintain smooth playback
-
-if __name__ == '__main__':
-    main()
-    # run_video()

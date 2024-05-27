@@ -1,0 +1,4 @@
+pytorch==2.0.0
+torchaudio==2.0.0
+pytorch-cuda=11.8
+git+https://github.com/m-bain/whisperx.git
