@@ -33,7 +33,19 @@ def handle_base64_audio(base64_string: str, name: str):
     print("Audio file saved to:", output_file_path)
 
     return f"./{name}.wav"
-        
+
+
+rhubarb_to_mouth = {
+  "A": "M",
+  "B": "E",
+  "C": "I",
+  "D": "A",
+  "E": "I",
+  "F": "O",
+  "G": "E",
+  "H": "I",
+  "X": "M",
+}
 
 @stub.function(image=modal_image, container_idle_timeout=300)
 @modal.web_endpoint(method="POST")
@@ -95,6 +107,9 @@ def get_viseme(file: dict):
     # delete text file and audio file
     os.remove(output_file)
     os.remove(audio_path)
+    
+    for n in data:
+        n["shape"] = rhubarb_to_mouth.get(n["shape"], "M")
     
     print(data)
     return {"data": data}
