@@ -4,11 +4,14 @@ import base64
 import os
 import random
 import string
+from pydub import AudioSegment
+import io
+
 
 stub = modal.Stub("rhubarb")
-modal_image = modal.Image.debian_slim().copy_local_dir("Rhubarb_Linux", "/root/Rhubarb")
+modal_image = modal.Image.debian_slim().copy_local_dir("Rhubarb_Linux", "/root/Rhubarb").pip_install("pydub").run_commands("apt-get install ffmpeg -y")
 
-def handle_base64_audio(base64_string: str, name: str):
+def handle_base64_audio(base64_string: str, format: str, name: str):
     # Decode the base64 string
     print(len(base64_string))
     print("Received base64 data:", base64_string[:50] + "...")  # Print the start of the base64 data for debugging
@@ -25,10 +28,14 @@ def handle_base64_audio(base64_string: str, name: str):
         
     audio_data = base64.b64decode(base64_string)
     
-    # Write the binary data to a file
+    audio = AudioSegment.from_file(io.BytesIO(audio_data), format=format)
     output_file_path = f"./{name}.wav"
-    with open(output_file_path, 'wb') as file:
-        file.write(audio_data)
+    audio.export(output_file_path, format="wav")
+    
+    # # Write the binary data to a file
+    # output_file_path = f"./{name}.wav"
+    # with open(output_file_path, 'wb') as file:
+    #     file.write(audio_data)
         
     print("Audio file saved to:", output_file_path)
 
@@ -54,9 +61,10 @@ def get_viseme(file: dict):
     token = get_random_token()
     
     base64_data = file["sound"]
+    format = file["format"]
     # audio_data = base64.b64decode(base64_data)
     # audio_path = f"./{token}.wav"
-    audio_path = handle_base64_audio(base64_data, token)
+    audio_path = handle_base64_audio(base64_data, format, token)
     
     # # Write the binary data to a .wav file
     # with open(audio_path, "wb") as wav_file:
